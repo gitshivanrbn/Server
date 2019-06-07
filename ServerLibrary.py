@@ -8,28 +8,17 @@ class ServerLibrary:
         print(self)
 
     @staticmethod
-    def fetchNUID(jsonmessage):
+    def checkcard(jsonmessage):
             cnxID = MySQLdb.connect(user='bank',password='wX9438',host='localhost',database='bank')
             cursorID = cnxID.cursor()
             receivedID = jsonmessage['IBAN']
             rowcountID = cursorID.execute("SELECT Pasje_ID FROM Pasjes WHERE Pasje_ID =%s",(receivedID,))
             cnxID.close()
             if (rowcountID > 0):
-                rowID = cursorID.fetchone()
-                print(rowID)
-                responseID = {'response': rowID[0]}
-                ID = json.dumps(responseID)
-                print(ID)
-                print('returned message succesfully')
-                return ID
+                return True
 
             else:
-                print('Error, data could not be found')
-                responseID = {'response': 'false'}
-                errorID = json.dumps(responseID)
-                print(errorID)
-                print('returned error message to client')
-                return errorID
+                return False
 
     @staticmethod
     def checkPIN(jsonmessage):
@@ -41,17 +30,9 @@ class ServerLibrary:
         rowcount = cursorpin.execute("SELECT PIN FROM Pasjes  WHERE PIN = %s AND Pasje_ID = %s",(receivedpin,receivedID,))
         cnxpin.close
         if (rowcount > 0):
-            rowpin = cursorpin.fetchone()
-            print('fetched pin:')
-            print(rowpin)
-            responsepin = {'response': str(rowpin[0])}
-            pin = json.dumps(responsepin)
-            return pin
+            return True
         else:
-            print('Error, data could not be found')
-            responsepin = {'response': 'false'}
-            errorpin = json.dumps(responsepin)
-            return errorpin
+            return False
 
     @staticmethod
     def getbalance(jsonmessage):

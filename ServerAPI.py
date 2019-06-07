@@ -8,21 +8,35 @@ import time
 from ServerLibrary import ServerLibrary
 
 api = ServerLibrary()
-centralbankaddress = 'ws://86.94.69.254:6666'
+centralbankaddress = 'ws://145.137.90.185:6666'
 bankID = 'SUPAVL'
 async def run(websocket,path):
     try:
         incoming_message = await websocket.recv()
-        print(incoming_message)
+        print('hi hi hi')
         try:
-            printf('received a message:',incoming_message)
+            print('received a message:',incoming_message)
             json_message = json.loads(incoming_message)
-            print(jsonmessage['IBAN'])
 
+            if (json_message['Func'] == 'checkcard'):
+                if (len(json_message['IBAN']) == 14):
+                    API_response = api.checkcard(json_message)
+                    if(API_response == True):
+                        print(API_response)
+                        await websocket.send('True')
+                    else:
+                        print('Consumer function is being called')
+                else:
+                    print('IBAN length is invalid!')
+                    response =  {'response' : 'IBAN is invalid'}
+                    await websocket.send(json.dumps(response))
+
+
+        #excepties van de json opvangen...
         except:
             print('error loading json, maybe its a wrong format?')
             response = {'response': 'false'}
-            await websocket.send(response)
+            await websocket.send(json.dumps(response))
     except:
         print('something went wrong')
 
@@ -42,9 +56,12 @@ async def register():
                     slaveresponse = await ws_slave.recv()
                     if (slaveresponse == 'true'):
                         print('confirmed slave registration')
+                        depo = ['ussr','deposit',6666,9999,20]
                         while(True):
-                            await ws_master.recv()
-    except:
+                            await ws_master.send(json.dumps(depo))
+
+
+    except ValueError:
         print('error connecting to central bank')
             
 
