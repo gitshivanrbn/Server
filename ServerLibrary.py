@@ -51,30 +51,21 @@ class ServerLibrary:
             return jsonbalance
         else:
             print('Error, data could not be found')
-            responsebalance = {'response': 'false'}
-            errorbalance = json.dumps(responsebalance)
-            return errorbalance
+            return False
 
     @staticmethod
     def withdraw(jsonmessage):
-        cnxwithdraw = MySQLdb.connect(user='bank',password='wX9438',host='localhost',database='bank')
-        cursorwithdraw = cnxwithdraw.cursor()
-        withdraw = jsonmessage['Amount']
-        withdrawpin = jsonmessage['PIN']
-        withdrawID = jsonmessage['IBAN']
-        cursorwithdraw.execute("UPDATE Pasjes SET Saldo = Saldo - %s WHERE PIN = %s AND Pasje_ID = %s",(withdraw,withdrawpin,withdrawID,))
-        cnxwithdraw.commit()
-        print('withdrew',withdraw)
-        rowcount = cursorwithdraw.execute("SELECT Saldo FROM Pasjes WHERE PIN = %s AND Pasje_ID = %s",(withdrawpin,withdrawID))
-        cnxwithdraw.close
-        if (rowcount > 0):
-            rowwithdraw = cursorwithdraw.fetchone()
-            print(rowwithdraw)
-            responsewithdraw = {'response': rowwithdraw[0]}
-            withdrawjson = json.dumps(responsewithdraw)
-            return withdrawjson
-        else:
-            print('Error, data could not be found')
-            responsewithdraw = {'response': 'false'}
-            errorwithdraw = json.dumps(responsewithdraw)
-            return errorwithdraw
+        try:
+            cnxwithdraw = MySQLdb.connect(user='bank',password='wX9438',host='localhost',database='bank')
+            cursorwithdraw = cnxwithdraw.cursor()
+            withdraw = jsonmessage['Amount']
+            withdrawpin = jsonmessage['PIN']
+            withdrawID = jsonmessage['IBAN']
+            cursorwithdraw.execute("UPDATE Pasjes SET Saldo = Saldo - %s WHERE PIN = %s AND Pasje_ID = %s",(withdraw,withdrawpin,withdrawID,))
+            cnxwithdraw.commit()
+            print('withdrew',withdraw)
+            cnxwithdraw.close
+            return True
+        except:
+            print('error or couldnt find selected statement')
+            return False
