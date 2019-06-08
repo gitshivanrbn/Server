@@ -53,7 +53,7 @@ async def run(websocket,path):
                 if(API_response == True):
                     await websocket.send(json.dumps(API_response))
                 else:
-                    await websocket.send(json.dumps(False)
+                    await websocket.send(json.dumps(False))
 
 
         #excepties van de json opvangen...
@@ -65,8 +65,7 @@ async def run(websocket,path):
         print('something went wrong')
 
 
-
-
+#de master-thread die registreert en in een while True loop staat
 async def register_master():
     try:
         async with websockets.connect(centralbankaddress) as ws_master:
@@ -82,6 +81,7 @@ async def register_master():
     except ValueError:
         print('error connecting to central bank')
 
+#de slave-thread die in een while true loop staat
 async def register_slave():
     async with websockets.connect(centralbankaddress) as ws_slave:
         print('sending slave request....')
@@ -96,11 +96,6 @@ async def register_slave():
                 print(slave_json)
                 await ws_slave.send(json.dumps('False'))
             
-async def CentralCallbacks(function):
-    while (True):
-        asyncio.gather(register_master(),register_slave())
-        await function()
-
 
 #start de server
 print('Starting server')
