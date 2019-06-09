@@ -15,10 +15,12 @@ class ServerLibrary:
             rowcountID = cursorID.execute("SELECT Pasje_ID FROM Pasjes WHERE Pasje_ID =%s",(receivedID,))
             cnxID.close()
             if (rowcountID > 0):
-                return True
+                response = {'response' : True}
+                return json.dumps(response)
 
             else:
-                return False
+                response = {'response': False}
+                return json.dumps(response)
 
     @staticmethod
     def checkPIN(jsonmessage):
@@ -30,9 +32,11 @@ class ServerLibrary:
         rowcount = cursorpin.execute("SELECT PIN FROM Pasjes  WHERE PIN = %s AND Pasje_ID = %s",(receivedpin,receivedID,))
         cnxpin.close
         if (rowcount > 0):
-            return True
+            response = {'response' : True}
+            return json.dumps(response)
         else:
-            return False
+            response = {'response' : False}
+            return json.dumps(response)
 
     @staticmethod
     def getbalance(jsonmessage):
@@ -47,11 +51,11 @@ class ServerLibrary:
             rowbalance = cursorbalance.fetchone()
             print(rowbalance)
             responsebalance = {'response': rowbalance[0]}
-            jsonbalance = json.dumps(responsebalance)
-            return jsonbalance
+            return json.dumps(responsebalance)
         else:
             print('Error, data could not be found')
-            return False
+            response = {'response' : False}
+            return json.dumps(response)
 
     @staticmethod
     def withdraw(jsonmessage):
@@ -61,11 +65,21 @@ class ServerLibrary:
             withdraw = jsonmessage['Amount']
             withdrawpin = jsonmessage['PIN']
             withdrawID = jsonmessage['IBAN']
-            cursorwithdraw.execute("UPDATE Pasjes SET Saldo = Saldo - %s WHERE PIN = %s AND Pasje_ID = %s",(withdraw,withdrawpin,withdrawID,))
-            cnxwithdraw.commit()
-            print('withdrew',withdraw)
-            cnxwithdraw.close
-            return True
+            rowcount = cursorwithdraw.execute("SELECT Saldo FROM Pasjes WHERE PIN = %s AND Pasje_ID = %s",(withdrawpin,withdrawID,))
+            if (rowcount > 0):
+                selected_amount = cursorwithdraw.fetchone()
+                print(selected_amount)
+                if (selected_amount > withdraw):
+                    cursorwithdraw.execute("UPDATE Pasjes SET Saldo = Saldo - %s WHERE PIN = %s AND Pasje_ID = %s",(withdraw,withdrawpin,withdrawID,))
+                    cnxwithdraw.commit()
+                    print('withdrew',withdraw)
+                    cnxwithdraw.close
+                    response = {'response': True}
+                    return json.dumps(response)
+            else:
+                cnxwithdraw.close
+                response = {'response': False}
+                return json.dumps(response)
         except:
-            print('error or couldnt find selected statement')
+            print('error or couldnt find selected statement or amount is too low')
             return False

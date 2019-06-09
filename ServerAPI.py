@@ -20,10 +20,11 @@ async def run(websocket,path):
             #de kaart checken
             if (json_message['Func'] == 'checkcard'):
                 if (len(json_message['IBAN']) == 14):
-                    API_response = api.checkcard(json_message)
-                    if(API_response == True):
+                    print(json_message['IBAN'])
+                    API_response = json.loads(api.checkcard(json_message))
+                    if(API_response['response'] == True):
                         print(API_response)
-                        await websocket.send('True')
+                        await websocket.send(json.dumps(API_response))
                     else:
                         print('Consumer function is being called')
                 else:
@@ -33,24 +34,24 @@ async def run(websocket,path):
 
             #de PIN checken.
             elif(json_message['Func'] == 'checkPIN'):
-                API_response = api.checkPIN(json_message)
-                if(API_response == True):
-                    print(API_respone)
-                    await websocket.send(True)
+                API_response = json.loads(api.checkPIN(json_message))
+                if(API_response['response'] == True):
+                    print(API_response)
+                    await websocket.send(json.dumps(API_response))
                 else:
                     print('consumer function is being called')
 
             elif(json_message['Func'] == 'getbalance'):
-                API_response = api.getbalance(json_message)
+                API_response = json.loads(api.getbalance(json_message))
                 print(API_response)
-                if(API_response != False):
+                if(API_response['response'] != False):
                     await websocket.send(json.dumps(API_response))
                 else:
-                    await websocket.send(False)
+                    print('consumer function is being called')
 
             elif(json_message['Func'] == 'withdraw'):
-                API_response = api.withdraw(json_message)
-                if(API_response == True):
+                API_response = json.loads(api.withdraw(json_message))
+                if(API_response['response'] == True):
                     await websocket.send(json.dumps(API_response))
                 else:
                     await websocket.send(json.dumps(False))
