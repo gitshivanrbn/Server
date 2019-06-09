@@ -80,23 +80,25 @@ async def register_master():
                     await asyncio.sleep(5)
 
     except ValueError:
-        print('error connecting to central bank')
+        print('error connecting to central bank as master')
 
 #de slave-thread die in een while true loop staat
 async def register_slave():
-    async with websockets.connect(centralbankaddress) as ws_slave:
-        print('sending slave request....')
-        slave = ['register','slave',bankID]
-        await ws_slave.send(json.dumps(slave))
-        slaveresponse = await ws_slave.recv()
-        if (slaveresponse == 'true'):
-            print('confirmed slave registration')
-            while(True):
-                slave_message = await ws_slave.recv()
-                slave_json = json.loads(slave_message)
-                print(slave_json)
-                await ws_slave.send(json.dumps('False'))
-            
+    try:
+        async with websockets.connect(centralbankaddress) as ws_slave:
+            print('sending slave request....')
+            slave = ['register','slave',bankID]
+            await ws_slave.send(json.dumps(slave))
+            slaveresponse = await ws_slave.recv()
+            if (slaveresponse == 'true'):
+                print('confirmed slave registration')
+                while(True):
+                    slave_message = await ws_slave.recv()
+                    slave_json = json.loads(slave_message)
+                    print(slave_json)
+                    await ws_slave.send(json.dumps('False'))
+        except:
+            print('Error connecting to central bank as slave')
 
 #start de server
 print('Starting server')

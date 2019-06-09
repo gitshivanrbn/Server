@@ -65,11 +65,10 @@ class ServerLibrary:
             withdraw = jsonmessage['Amount']
             withdrawpin = jsonmessage['PIN']
             withdrawID = jsonmessage['IBAN']
-            rowcount = cursorwithdraw.execute("SELECT Saldo FROM Pasjes WHERE PIN = %s AND Pasje_ID = %s",(withdrawpin,withdrawID,))
-            if (rowcount > 0):
-                selected_amount = cursorwithdraw.fetchone()
-                print(selected_amount)
-                if (selected_amount > withdraw):
+            rowcountwithdraw= cursorwithdraw.execute("SELECT Saldo FROM Pasjes WHERE PIN = %s AND Pasje_ID = %s",(withdrawpin,withdrawID,))
+            if (rowcountwithdraw > 0):
+                selected_amount = cursorwithdraw.fetchone()[0]
+                if (int(selected_amount) > int(withdraw)):
                     cursorwithdraw.execute("UPDATE Pasjes SET Saldo = Saldo - %s WHERE PIN = %s AND Pasje_ID = %s",(withdraw,withdrawpin,withdrawID,))
                     cnxwithdraw.commit()
                     print('withdrew',withdraw)
