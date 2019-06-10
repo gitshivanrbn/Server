@@ -10,6 +10,8 @@ from ServerLibrary import ServerLibrary
 api = ServerLibrary()
 centralbankaddress = 'ws://86.94.69.254:6666'
 bankID = 'supavl'
+storedcommands = []
+
 async def run(websocket,path):
     try:
         incoming_message = await websocket.recv()
@@ -27,6 +29,7 @@ async def run(websocket,path):
                         await websocket.send(json.dumps(API_response))
                     else:
                         print('Consumer function is being called')
+                        storecommands(json.dumps(json_message))
                 else:
                     print('IBAN length is invalid!')
                     response =  {'response' : 'IBAN is invalid'}
@@ -55,7 +58,12 @@ async def run(websocket,path):
                     await websocket.send(json.dumps(API_response))
                 else:
                     await websocket.send(json.dumps(False))
+            
 
+            else:
+                print('command not found')
+                response = {'response' : False}
+                await websocket.send(json.dumps(response))
 
         #excepties van de json opvangen...
         except:
@@ -66,6 +74,7 @@ async def run(websocket,path):
         print('something went wrong')
 
 
+#NOG TO-DO
 #de master-thread die registreert en in een while True loop staat
 async def register_master():
     try:
@@ -78,10 +87,21 @@ async def register_master():
                 print('confirmed master registration')     
                 while(True):
                     await asyncio.sleep(5)
+                    if(len(storedcommands) != 0):
+                        x = getcommands()
+                        print('X X X  X X X X X X')
+                        print(x)
+                        await ws_master.send(json.dumps(x))
+                        test = await ws_master.recv()
+                        print(test)
+                
+                        
 
     except ValueError:
         print('error connecting to central bank as master')
 
+
+#NOG TO DO
 #de slave-thread die in een while true loop staat
 async def register_slave():
     try:
@@ -94,11 +114,37 @@ async def register_slave():
                 print('confirmed slave registration')
                 while(True):
                     slave_message = await ws_slave.recv()
+                    print(slave_message)
                     slave_json = json.loads(slave_message)
-                    print(slave_json)
-                    await ws_slave.send(json.dumps('False'))
-        except:
-            print('Error connecting to central bank as slave')
+                    print('receiving slave message.')
+                    if(slave_json[0] == 'open'):
+                        print('opening an account remotely...')
+                        #slave_response = json.loads(api.openremotely)
+                        
+                    else:
+                        await ws_slave.send(json.dumps('False'))
+    except:
+        print('Error in slave connection')
+
+
+
+
+#producer functie tussen de server-master connectie
+
+def storecommands(json_message):
+    storedcommands.append(json_message)
+
+def getcommands():
+    command = json.loads(storedcommands.pop())
+    returned_command = []
+    returned_command.append(command['IDSenBank'].lower())
+    returned_command.append(command['Func'])
+    returned_command.append(command['IBAN'].lower())
+    returned_command.append(command['PIN'].lower())
+    returned_command.append(int(command['Amount'].lower()))
+    return returned_command
+
+
 
 #start de server
 print('Starting server')
