@@ -11,6 +11,7 @@ api = ServerLibrary()
 centralbankaddress = 'ws://86.94.69.254:6666'
 bankID = 'supavl'
 storedcommands = []
+receivedanswers = []
 
 async def run(websocket,path):
     try:
@@ -29,7 +30,12 @@ async def run(websocket,path):
                         await websocket.send(json.dumps(API_response))
                     else:
                         print('Consumer function is being called')
-                        storecommands(json.dumps(json_message))
+                        storecommand(json.dumps(json_message))
+                        await asyncio.sleep(0.02)
+                        if(len(receivedanswers) != 0):
+                            answer = getreceivedanswer()
+                            print(answer)
+                            await websocket.send(json.dumps({'response': answer}))
                 else:
                     print('IBAN length is invalid!')
                     response =  {'response' : 'IBAN is invalid'}
@@ -43,7 +49,14 @@ async def run(websocket,path):
                     await websocket.send(json.dumps(API_response))
                 else:
                     print('consumer function is being called')
+                    storecommand(json.dumps(json_message))
+                    await asyncio.sleep(0.02)
+                    if(len(receivedanswers) != 0):
+                        answer = getreceivedanswer()
+                        print(answer)
+                        await websocket.send(json.dumps({'response': answer}))
 
+            #GET BELANCE!!!!!!!!!!!!!                
             elif(json_message['Func'] == 'getbalance'):
                 API_response = json.loads(api.getbalance(json_message))
                 print(API_response)
@@ -51,13 +64,27 @@ async def run(websocket,path):
                     await websocket.send(json.dumps(API_response))
                 else:
                     print('consumer function is being called')
+                    storecommand(json.dumps(json_message))
+                    await asyncio.sleep(0.02)
+                    if(len(receivedanswers) != 0):
+                        answer = getreceivedanswer()
+                        print(answer)
+                        await websocket.send(json.dumps({'response': answer}))
 
+
+            #WITHDRAW!!!!!!!!!!!!!
             elif(json_message['Func'] == 'withdraw'):
                 API_response = json.loads(api.withdraw(json_message))
                 if(API_response['response'] == True):
                     await websocket.send(json.dumps(API_response))
                 else:
-                    await websocket.send(json.dumps(False))
+                    print('consumer function is being called')
+                    storecommand(json.dumps(json_message))
+                    await asyncio.sleep(0.02)
+                    if(len(receivedanswers) != 0):
+                        answer = getreceivedanswer()
+                        print(answer)
+                        await websocket.send(json.dumps({'response': answer}))
             
 
             else:
@@ -86,15 +113,15 @@ async def register_master():
             if (masterresponse == 'true'):
                 print('confirmed master registration')     
                 while(True):
-                    await asyncio.sleep(5)
+                    await asyncio.sleep(0.01)
                     if(len(storedcommands) != 0):
-                        x = getcommands()
+                        x = getcommand()
                         print('X X X  X X X X X X')
                         print(x)
                         await ws_master.send(json.dumps(x))
                         test = await ws_master.recv()
-                        print(test)
-                
+                        storereceivedanswer(test)
+
                         
 
     except ValueError:
@@ -131,10 +158,16 @@ async def register_slave():
 
 #producer functie tussen de server-master connectie
 
-def storecommands(json_message):
+#functie om de berichten op te slaan
+def storecommand(json_message):
     storedcommands.append(json_message)
 
-def getcommands():
+def storereceivedanswer(receivedanswer):
+    receivedanswers.append(receivedanswer)
+
+
+#functie om berichten op te halen
+def getcommand():
     command = json.loads(storedcommands.pop())
     returned_command = []
     returned_command.append(command['IDSenBank'].lower())
@@ -144,7 +177,9 @@ def getcommands():
     returned_command.append(int(command['Amount'].lower()))
     return returned_command
 
-
+def getreceivedanswer():
+    receivedanswer = receivedanswers.pop()
+    return receivedanswer
 
 #start de server
 print('Starting server')
