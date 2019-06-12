@@ -8,8 +8,8 @@ import time
 from ServerLibrary import ServerLibrary
 
 api = ServerLibrary()
-centralbankaddress = 'ws://86.94.69.254:6666'
-bankID = 'supavl'
+centralbankaddress = 'ws://145.24.222.24:8080'
+bankID = 'pavl'
 storedcommands = []
 receivedanswers = []
 
@@ -19,6 +19,8 @@ async def run(websocket,path):
         try:
             print('received a message:',incoming_message)
             json_message = json.loads(incoming_message)
+            json_message['IDRecBank'] = json_message['IBAN'][4:8]
+            json_message['IDSenBank'] = bankID
 
             #de kaart checken
             if (json_message['Func'] == 'checkcard'):
@@ -42,7 +44,7 @@ async def run(websocket,path):
                     await websocket.send(json.dumps(response))
 
             #de PIN checken.
-            elif(json_message['Func'] == 'checkPIN'):
+            elif(json_message['Func'] == 'pinCheck'):
                 API_response = json.loads(api.checkPIN(json_message))
                 if(API_response['response'] == True):
                     print(API_response)
@@ -86,7 +88,6 @@ async def run(websocket,path):
                         print(answer)
                         await websocket.send(json.dumps({'response': answer}))
             
-
             else:
                 print('command not found')
                 response = {'response' : False}
@@ -115,12 +116,11 @@ async def register_master():
                 while(True):
                     await asyncio.sleep(0.01)
                     if(len(storedcommands) != 0):
-                        x = getcommand()
-                        print('X X X  X X X X X X')
-                        print(x)
-                        await ws_master.send(json.dumps(x))
-                        test = await ws_master.recv()
-                        storereceivedanswer(test)
+                        command = getcommand()
+                        await ws_master.send(json.dumps(command))
+                        master_answer = await ws_master.recv()
+                        print('master received an aswer')
+                        storereceivedanswer(master_answer)
 
                         
 
@@ -141,17 +141,35 @@ async def register_slave():
                 print('confirmed slave registration')
                 while(True):
                     slave_message = await ws_slave.recv()
+                    slave_message = slave_message[1:len(slave_message)-1]
+                    print('received a slave message')
                     print(slave_message)
                     slave_json = json.loads(slave_message)
-                    print('receiving slave message.')
-                    if(slave_json[0] == 'open'):
-                        print('opening an account remotely...')
-                        #slave_response = json.loads(api.openremotely)
-                        
+                    slave_json['IDRecBank'] = slave_json['IDRecBank'].lower()
+                    if(slave_json['IDRecBank'] == 'pavl'):
+                        print('receiving slave message.')
+                        if(slave_json['Func'] == 'checkcard'):
+                            print('checking card remotely')
+                            response = json.loads(api.checkcard(slave_json))
+                            await ws_slave.send(json.dumps(response['response']))
+                        elif(slave_json['Func'] == 'pinCheck'):
+                            print('checking pin remotely...')
+                            response = json.loads(api.checkPIN(slave_json))
+                            await ws_slave.send(json.dumps(response['response']))
+
+                        elif(slave_json['Func'] == 'withdraw'):
+                            print('withdrawing remotely')
+                            response = json.loads(api.withdraw(slave_json))
+                            print(response)
+                            await ws_slave.send(json.dumps(response['response']))
+                        else:
+                            await ws_slave.send(json.dumps('False'))
                     else:
-                        await ws_slave.send(json.dumps('False'))
+                        response = False
+                        await ws_slave.send(json.dumps(response))
     except:
         print('Error in slave connection')
+        await ws_slave.send(False)
 
 
 
@@ -170,11 +188,8 @@ def storereceivedanswer(receivedanswer):
 def getcommand():
     command = json.loads(storedcommands.pop())
     returned_command = []
-    returned_command.append(command['IDSenBank'].lower())
-    returned_command.append(command['Func'])
-    returned_command.append(command['IBAN'].lower())
-    returned_command.append(command['PIN'].lower())
-    returned_command.append(int(command['Amount'].lower()))
+    returned_command.append(command['IDRecBank'].lower())
+    returned_command.append(command)
     return returned_command
 
 def getreceivedanswer():

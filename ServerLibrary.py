@@ -19,6 +19,7 @@ class ServerLibrary:
                 return json.dumps(response)
 
             else:
+                print('couldnt find card')
                 response = {'response': False}
                 return json.dumps(response)
 
@@ -35,6 +36,7 @@ class ServerLibrary:
             response = {'response' : True}
             return json.dumps(response)
         else:
+            print('couldnt find PIN')
             response = {'response' : False}
             return json.dumps(response)
 
@@ -81,22 +83,5 @@ class ServerLibrary:
                 return json.dumps(response)
         except:
             print('error or couldnt find selected statement or amount is too low')
-            return False
-    
-    def openremotely(slave_json):
-        try:
-            cnxopen = MySQLdb.connect(user='bank',password='wX9438',host='localhost',database='bank')
-            cursoropen = cnxopen.cursor()
-            rekeningnummer= slave_json[2]
-            PIN = slave_json[3]
-            cursorwithdraw.execute("INSERT INTO Klanten values(default,null,null,%s)",(rekeningnummer,))
-            print('added account succesfully')
-            cursorwithdraw.execute("INSERT INTO Pasjes values(%s",(PIN,))
-            
-
-
-            return json.dumps(True)
-
-        except:
-            print('error opening an account')
-            return json.dumps(False)
+            response = { 'response' : False}
+            return response
