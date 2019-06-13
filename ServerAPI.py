@@ -117,8 +117,7 @@ async def register_master():
                     await asyncio.sleep(0.01)
                     if(len(storedcommands) != 0):
                         command = getcommand()
-                        command = str(command)
-                        print(command)
+                        print(json.dumps(command))
                         await ws_master.send(json.dumps(command))
                         master_answer = await ws_master.recv()
                         print('master received an aswer')
