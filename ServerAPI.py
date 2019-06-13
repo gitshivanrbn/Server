@@ -8,7 +8,7 @@ import time
 from ServerLibrary import ServerLibrary
 
 api = ServerLibrary()
-centralbankaddress = 'ws://145.24.222.24:8080'
+centralbankaddress = 'ws://86.94.69.254:6666'
 bankID = 'pavl'
 storedcommands = []
 receivedanswers = []
@@ -117,6 +117,8 @@ async def register_master():
                     await asyncio.sleep(0.01)
                     if(len(storedcommands) != 0):
                         command = getcommand()
+                        command = str(command)
+                        print(command)
                         await ws_master.send(json.dumps(command))
                         master_answer = await ws_master.recv()
                         print('master received an aswer')
