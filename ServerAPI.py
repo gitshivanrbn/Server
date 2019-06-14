@@ -8,8 +8,8 @@ import time
 from ServerLibrary import ServerLibrary
 
 api = ServerLibrary()
-centralbankaddress = 'ws://86.94.69.254:6666'
-bankID = 'pavl'
+centralbankaddress = 'ws://145.137.90.185:6666'
+bankID = 'supavl'
 storedcommands = []
 receivedanswers = []
 
@@ -18,8 +18,10 @@ async def run(websocket,path):
         incoming_message = await websocket.recv()
         try:
             print('received a message:',incoming_message)
+            print(len(incoming_message))
             json_message = json.loads(incoming_message)
-            json_message['IDRecBank'] = json_message['IBAN'][4:8]
+            json_message['IDRecBank'] = json_message['IBAN'][0:2] +json_message['IBAN'][4:8]
+            print(json_message['IBAN'])
             json_message['IDSenBank'] = bankID
 
             #de kaart checken
@@ -33,7 +35,7 @@ async def run(websocket,path):
                     else:
                         print('Consumer function is being called')
                         storecommand(json.dumps(json_message))
-                        await asyncio.sleep(0.02)
+                        await asyncio.sleep(0.06)
                         if(len(receivedanswers) != 0):
                             answer = getreceivedanswer()
                             print(answer)
@@ -52,7 +54,7 @@ async def run(websocket,path):
                 else:
                     print('consumer function is being called')
                     storecommand(json.dumps(json_message))
-                    await asyncio.sleep(0.02)
+                    await asyncio.sleep(0.06)
                     if(len(receivedanswers) != 0):
                         answer = getreceivedanswer()
                         print(answer)
@@ -67,7 +69,7 @@ async def run(websocket,path):
                 else:
                     print('consumer function is being called')
                     storecommand(json.dumps(json_message))
-                    await asyncio.sleep(0.02)
+                    await asyncio.sleep(0.06)
                     if(len(receivedanswers) != 0):
                         answer = getreceivedanswer()
                         print(answer)
@@ -77,12 +79,13 @@ async def run(websocket,path):
             #WITHDRAW!!!!!!!!!!!!!
             elif(json_message['Func'] == 'withdraw'):
                 API_response = json.loads(api.withdraw(json_message))
+                print('test')
                 if(API_response['response'] == True):
                     await websocket.send(json.dumps(API_response))
                 else:
                     print('consumer function is being called')
-                    storecommand(json.dumps(json_message))
-                    await asyncio.sleep(0.02)
+                    storecommand(json_message)
+                    await asyncio.sleep(0.05)
                     if(len(receivedanswers) != 0):
                         answer = getreceivedanswer()
                         print(answer)
@@ -117,10 +120,12 @@ async def register_master():
                     await asyncio.sleep(0.01)
                     if(len(storedcommands) != 0):
                         command = getcommand()
-                        print(json.dumps(command))
-                        await ws_master.send(json.dumps(command))
+                        print('command')
+                        print(command)
+                        print(len(str(command)))
+                        await ws_master.send(command)
                         master_answer = await ws_master.recv()
-                        print('master received an aswer')
+                        print('master received an answer')
                         storereceivedanswer(master_answer)
 
                         
@@ -142,12 +147,14 @@ async def register_slave():
                 print('confirmed slave registration')
                 while(True):
                     slave_message = await ws_slave.recv()
-                    slave_message = slave_message[1:len(slave_message)-1]
                     print('received a slave message')
-                    print(slave_message)
-                    slave_json = json.loads(slave_message)
+                    print('slave_message is:', slave_message)
+                    slave_json = slave_message[2:len(slave_message) - 2]
+                    slave_json = slave_json.replace("'",'"')
+                    slave_json = json.loads(slave_json)
                     slave_json['IDRecBank'] = slave_json['IDRecBank'].lower()
-                    if(slave_json['IDRecBank'] == 'pavl'):
+                    print(slave_json['IDRecBank'])
+                    if(slave_json['IDRecBank'] == 'supavl'):
                         print('receiving slave message.')
                         if(slave_json['Func'] == 'checkcard'):
                             print('checking card remotely')
@@ -163,15 +170,14 @@ async def register_slave():
                             response = json.loads(api.withdraw(slave_json))
                             print(response)
                             await ws_slave.send(json.dumps(response['response']))
-                        else:
+                else:
                             await ws_slave.send(json.dumps('False'))
-                    else:
+            else:
                         response = False
                         await ws_slave.send(json.dumps(response))
-    except:
-        print('Error in slave connection')
-        await ws_slave.send(False)
 
+    except:
+        print('error in slave_connection')
 
 
 
@@ -188,10 +194,13 @@ def storereceivedanswer(receivedanswer):
 #functie om berichten op te halen
 def getcommand():
     command = json.loads(storedcommands.pop())
-    returned_command = []
-    returned_command.append(command['IDRecBank'].lower())
-    returned_command.append(command)
-    return returned_command
+    buildedstring = '["'
+    buildedstring += (command['IDRecBank'])
+    buildedstring += '" , '
+    buildedstring += '"'
+    buildedstring += str(command)
+    buildedstring += '"]'
+    return buildedstring
 
 def getreceivedanswer():
     receivedanswer = receivedanswers.pop()
