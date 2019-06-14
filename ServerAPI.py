@@ -9,7 +9,7 @@ from ServerLibrary import ServerLibrary
 
 api = ServerLibrary()
 centralbankaddress = 'ws://145.137.90.185:6666'
-bankID = 'supavl'
+bankID = 'SUPAVL'
 storedcommands = []
 receivedanswers = []
 
@@ -20,6 +20,8 @@ async def run(websocket,path):
             print('received a message:',incoming_message)
             print(len(incoming_message))
             json_message = json.loads(incoming_message)
+            json_message['Amount'] = int(json_message['Amount'])
+            print(json_message['Amount'])
             json_message['IDRecBank'] = json_message['IBAN'][0:2] +json_message['IBAN'][4:8]
             print(json_message['IBAN'])
             json_message['IDSenBank'] = bankID
@@ -84,7 +86,7 @@ async def run(websocket,path):
                     await websocket.send(json.dumps(API_response))
                 else:
                     print('consumer function is being called')
-                    storecommand(json_message)
+                    storecommand(json.dumps(json_message))
                     await asyncio.sleep(0.05)
                     if(len(receivedanswers) != 0):
                         answer = getreceivedanswer()
@@ -153,8 +155,7 @@ async def register_slave():
                     slave_json = slave_json.replace("'",'"')
                     slave_json = json.loads(slave_json)
                     slave_json['IDRecBank'] = slave_json['IDRecBank'].lower()
-                    print(slave_json['IDRecBank'])
-                    if(slave_json['IDRecBank'] == 'supavl'):
+                    if(slave_json['IDRecBank'] == 'supavl' || slave_json['IDRecBank'] == 'pavl'):
                         print('receiving slave message.')
                         if(slave_json['Func'] == 'checkcard'):
                             print('checking card remotely')
@@ -170,8 +171,9 @@ async def register_slave():
                             response = json.loads(api.withdraw(slave_json))
                             print(response)
                             await ws_slave.send(json.dumps(response['response']))
-                else:
-                            await ws_slave.send(json.dumps('False'))
+                    else:
+                        print('bank code not identified')
+                        await ws_slave.send(json.dumps('False'))
             else:
                         response = False
                         await ws_slave.send(json.dumps(response))
@@ -199,6 +201,7 @@ def getcommand():
     buildedstring += '" , '
     buildedstring += '"'
     buildedstring += str(command)
+
     buildedstring += '"]'
     return buildedstring
 

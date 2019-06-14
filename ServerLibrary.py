@@ -64,7 +64,7 @@ class ServerLibrary:
         try:
             cnxwithdraw = MySQLdb.connect(user='bank',password='wX9438',host='localhost',database='bank')
             cursorwithdraw = cnxwithdraw.cursor()
-            withdraw = (jsonmessage['Amount']
+            withdraw = jsonmessage['Amount']
             withdrawpin = jsonmessage['PIN']
             withdrawID = jsonmessage['IBAN']
             rowcountwithdraw= cursorwithdraw.execute("SELECT Saldo FROM Pasjes WHERE PIN = %s AND Pasje_ID = %s",(withdrawpin,withdrawID,))
