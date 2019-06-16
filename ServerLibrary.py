@@ -9,7 +9,7 @@ class ServerLibrary:
 
     @staticmethod
     def checkcard(jsonmessage):
-            cnxID = MySQLdb.connect(user='bank',password='wX9438',host='localhost',database='bank')
+            cnxID = MySQLdb.connect(user='nope',password='nope',host='localhost',database='nope')
             cursorID = cnxID.cursor()
             receivedID = jsonmessage['IBAN']
             rowcountID = cursorID.execute("SELECT Pasje_ID FROM Pasjes WHERE Pasje_ID =%s",(receivedID,))
@@ -26,7 +26,7 @@ class ServerLibrary:
     @staticmethod
     def checkPIN(jsonmessage):
         #CHECKEN VOOR DE PIN
-        cnxpin = MySQLdb.connect(user='bank',password='wX9438',host='localhost',database='bank')
+        cnxpin = MySQLdb.connect(user='nope',password='nope',host='localhost',database='nope')
         cursorpin = cnxpin.cursor()
         receivedpin = jsonmessage['PIN']
         receivedID = jsonmessage['IBAN']
@@ -43,7 +43,7 @@ class ServerLibrary:
     @staticmethod
     def getbalance(jsonmessage):
         #Get balance
-        cnxbalance = MySQLdb.connect(user='bank',password='wX9438',host='localhost',database='bank')
+        cnxbalance = MySQLdb.connect(user='nope',password='nope',host='localhost',database='nope')
         cursorbalance = cnxbalance.cursor()
         balancepin = jsonmessage['PIN']
         balanceID = jsonmessage['IBAN']
@@ -62,7 +62,7 @@ class ServerLibrary:
     @staticmethod
     def withdraw(jsonmessage):
         try:
-            cnxwithdraw = MySQLdb.connect(user='bank',password='wX9438',host='localhost',database='bank')
+            cnxwithdraw = MySQLdb.connect(user='nope',password='nope',host='localhost',database='nope')
             cursorwithdraw = cnxwithdraw.cursor()
             withdraw = jsonmessage['Amount']
             withdrawpin = jsonmessage['PIN']
