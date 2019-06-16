@@ -107,7 +107,7 @@ async def run(websocket,path):
         print('something went wrong')
 
 
-#NOG TO-DO
+#AF!
 #de master-thread die registreert en in een while True loop staat
 async def register_master():
     try:
@@ -136,7 +136,7 @@ async def register_master():
         print('error connecting to central bank as master')
 
 
-#NOG TO DO
+#AF!
 #de slave-thread die in een while true loop staat
 async def register_slave():
     try:
